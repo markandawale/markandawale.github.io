@@ -1,68 +1,82 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>X → Nitter Redirector</title>
-<style>
-  body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px;line-height:1.5}
-  input{width:100%;padding:10px;font-size:16px;box-sizing:border-box}
-  button{margin-top:10px;padding:10px 16px;font-size:16px;cursor:pointer}
-  code,a.bm{word-break:break-all}
-  a.bm{display:inline-block;padding:8px 12px;background:#222;color:#fff;border-radius:6px;text-decoration:none}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X to Nitter Redirector</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 500px;
+      margin: 60px auto;
+      padding: 20px;
+      text-align: center;
+    }
+    input {
+      width: 80%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    p {
+      color: #555;
+      font-size: 14px;
+    }
+  </style>
+  <script>
+    const instances = [
+      "https://nitter.catsarch.com",
+      "https://nitter.tiekoetter.com",
+      "https://shitter.thepixora.com",
+      "https://nitter.jaydenha.uk",
+      "https://songlark.jaydenha.uk"
+    ];
+
+    function getRedirectUrl(input) {
+      let clean = input.trim();
+      if (!clean) return null;
+
+      // x.com या twitter.com हटाकर सिर्फ आगे का path (जैसे /david) निकालना
+      clean = clean.replace(/^(https?:\/\/)?(www\.)?(x\.com|twitter\.com)\/?/i, "");
+      clean = clean.replace(/^\/+/, ""); // शुरू के एक्स्ट्रा स्लैश हटाना
+
+      const randomServer = instances[Math.floor(Math.random() * instances.length)];
+      return `${randomServer}/${clean}`;
+    }
+
+    // Direct URL Parameter Redirect (?url=x.com/david या ?x.com/david)
+    const params = new URLSearchParams(window.location.search);
+    const targetParam = params.get("url") || window.location.search.substring(1);
+
+    if (targetParam) {
+      const destination = getRedirectUrl(decodeURIComponent(targetParam));
+      if (destination) {
+        window.location.replace(destination);
+      }
+    }
+
+    function manualRedirect(e) {
+      e.preventDefault();
+      const val = document.getElementById("urlInput").value;
+      const destination = getRedirectUrl(val);
+      if (destination) {
+        window.location.href = destination;
+      }
+    }
+  </script>
 </head>
 <body>
-<h2>X → Nitter Redirector</h2>
-
-<p>Koi bhi x.com / twitter.com link paste karo:</p>
-<input id="url" placeholder="https://x.com/david" autofocus>
-<button id="go">Open on Nitter</button>
-
-<h3>Bookmarklet</h3>
-<p>Is button ko bookmarks bar me drag karo. X ke kisi page par click karoge to wahi page random Nitter par khulega:</p>
-<a class="bm" id="bm">X → Nitter</a>
-
-<script>
-const INSTANCES = [
-  'https://nitter.catsarch.com',
-  'https://nitter.tiekoetter.com',
-  'https://shitter.thepixora.com',
-  'https://nitter.jaydenha.uk',
-  'https://songlark.jaydenha.uk'
-];
-
-function convert(input) {
-  let s = input.trim();
-  if (!s) return null;
-  if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
-  let u;
-  try { u = new URL(s); } catch { return null; }
-  const host = u.hostname.replace(/^www\./, '');
-  if (host !== 'x.com' && host !== 'twitter.com') return null;
-  const base = INSTANCES[Math.floor(Math.random() * INSTANCES.length)];
-  return base + u.pathname + u.search + u.hash;
-}
-
-function go(value, newTab) {
-  const t = convert(value);
-  if (!t) { alert('Valid x.com ya twitter.com link daalo.'); return; }
-  if (newTab) window.open(t, '_blank', 'noopener');
-  else location.replace(t);
-}
-
-document.getElementById('go').onclick = () => go(document.getElementById('url').value, true);
-document.getElementById('url').addEventListener('keydown', e => { if (e.key === 'Enter') go(e.target.value, true); });
-
-// ?url=https://x.com/david support (same tab, kyunki bina click ke new tab popup-blocker rok deta hai)
-const q = new URLSearchParams(location.search).get('url');
-if (q) go(q, false);
-
-// Bookmarklet
-const bm = "javascript:(function(){var I=" + JSON.stringify(INSTANCES) +
-  ";var h=location.hostname.replace(/^www\\./,'');if(h!=='x.com'&&h!=='twitter.com'){alert('Ye X page nahi hai');return}" +
-  "location.href=I[Math.floor(Math.random()*I.length)]+location.pathname+location.search+location.hash})();";
-document.getElementById('bm').href = bm;
-</script>
+  <h2>X to Nitter Redirect</h2>
+  <form onsubmit="manualRedirect(event)">
+    <input type="text" id="urlInput" placeholder="x.com/david या सिर्फ david डालें" required autofocus>
+    <br>
+    <button type="submit">Redirect</button>
+  </form>
+  <p>Direct Redirect: <code>?url=x.com/david</code></p>
 </body>
 </html>
