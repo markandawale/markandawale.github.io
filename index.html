@@ -37,46 +37,37 @@
       "https://songlark.jaydenha.uk"
     ];
 
-    function getRedirectUrl(input) {
-      let clean = input.trim();
-      if (!clean) return null;
-
-      // x.com या twitter.com हटाकर सिर्फ आगे का path (जैसे /david) निकालना
-      clean = clean.replace(/^(https?:\/\/)?(www\.)?(x\.com|twitter\.com)\/?/i, "");
-      clean = clean.replace(/^\/+/, ""); // शुरू के एक्स्ट्रा स्लैश हटाना
-
-      const randomServer = instances[Math.floor(Math.random() * instances.length)];
-      return `${randomServer}/${clean}`;
-    }
-
-    // Direct URL Parameter Redirect (?url=x.com/david या ?x.com/david)
-    const params = new URLSearchParams(window.location.search);
-    const targetParam = params.get("url") || window.location.search.substring(1);
-
-    if (targetParam) {
-      const destination = getRedirectUrl(decodeURIComponent(targetParam));
-      if (destination) {
-        window.location.replace(destination);
+    // स्मार्ट शफल लॉजिक: जब तक पांचों सर्वर एक-एक बार यूज नहीं हो जाते, तब तक कोई भी रिपीट नहीं होगा
+    function getNextServer() {
+      let pool = [];
+      try {
+        pool = JSON.parse(localStorage.getItem("nitter_pool")) || [];
+      } catch (e) {
+        pool = [];
       }
-    }
 
-    function manualRedirect(e) {
-      e.preventDefault();
-      const val = document.getElementById("urlInput").value;
-      const destination = getRedirectUrl(val);
-      if (destination) {
-        window.location.href = destination;
+      const lastUsed = localStorage.getItem("nitter_last");
+
+      if (pool.length === 0) {
+        pool = [...instances];
+        // Fisher-Yates Shuffle (Cryptographic Random के साथ)
+        for (let i = pool.length - 1; i > 0; i--) {
+          const rand = new Uint32Array(1);
+          window.crypto.getRandomValues(rand);
+          const j = rand[0] % (i + 1);
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        // अगर नया पूल बनने पर अगला सर्वर वही है जो पिछली बार खुला था, तो उसे बदल दें
+        if (pool.length > 1 && pool[pool.length - 1] === lastUsed) {
+          [pool[pool.length - 1], pool[0]] = [pool[0], pool[pool.length - 1]];
+        }
       }
+
+      const selected = pool.pop();
+      try {
+        localStorage.setItem("nitter_pool", JSON.stringify(pool));
+        localStorage.setItem("nitter_last", selected);
+      } catch (e) {}
+
+      return selected;
     }
-  </script>
-</head>
-<body>
-  <h2>X to Nitter Redirect</h2>
-  <form onsubmit="manualRedirect(event)">
-    <input type="text" id="urlInput" placeholder="x.com/david या सिर्फ david डालें" required autofocus>
-    <br>
-    <button type="submit">Redirect</button>
-  </form>
-  <p>Direct Redirect: <code>?url=x.com/david</code></p>
-</body>
-</html>
