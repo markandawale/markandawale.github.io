@@ -44,8 +44,6 @@
   "https://nitter.miningtcup.me"
 ]
 
-
-    // स्मार्ट शफल लॉजिक: जब तक पांचों सर्वर एक-एक बार यूज नहीं हो जाते, तब तक कोई भी रिपीट नहीं होगा
     function getNextServer() {
       let pool = [];
       try {
@@ -58,14 +56,13 @@
 
       if (pool.length === 0) {
         pool = [...instances];
-        // Fisher-Yates Shuffle (Cryptographic Random के साथ)
+        // Fisher-Yates Shuffle (Cryptographic Random)
         for (let i = pool.length - 1; i > 0; i--) {
           const rand = new Uint32Array(1);
           window.crypto.getRandomValues(rand);
           const j = rand[0] % (i + 1);
           [pool[i], pool[j]] = [pool[j], pool[i]];
         }
-        // अगर नया पूल बनने पर अगला सर्वर वही है जो पिछली बार खुला था, तो उसे बदल दें
         if (pool.length > 1 && pool[pool.length - 1] === lastUsed) {
           [pool[pool.length - 1], pool[0]] = [pool[0], pool[pool.length - 1]];
         }
@@ -84,7 +81,6 @@
       let clean = input.trim();
       if (!clean) return null;
 
-      // x.com या twitter.com हटाकर सिर्फ आगे का path निकालना
       clean = clean.replace(/^(https?:\/\/)?(www\.)?(x\.com|twitter\.com)\/?/i, "");
       clean = clean.replace(/^\/+/, "");
 
@@ -92,7 +88,7 @@
       return `${randomServer}/${clean}`;
     }
 
-    // Direct URL Parameter Redirect (?url=x.com/david या ?x.com/david)
+    // Direct URL Parameter Redirect (?url=x.com/david or ?x.com/david)
     const params = new URLSearchParams(window.location.search);
     const targetParam = params.get("url") || window.location.search.substring(1);
 
@@ -108,7 +104,6 @@
       const val = document.getElementById("urlInput").value;
       const destination = getRedirectUrl(val);
       if (destination) {
-        // नए टैब (दूसरे पेज) में ओपन करने के लिए
         window.open(destination, "_blank", "noopener,noreferrer");
       }
     }
