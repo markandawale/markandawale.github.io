@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X → Nitter Redirector</title>
+<style>
+  body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px;line-height:1.5}
+  input{width:100%;padding:10px;font-size:16px;box-sizing:border-box}
+  button{margin-top:10px;padding:10px 16px;font-size:16px;cursor:pointer}
+  code,a.bm{word-break:break-all}
+  a.bm{display:inline-block;padding:8px 12px;background:#222;color:#fff;border-radius:6px;text-decoration:none}
+</style>
+</head>
+<body>
+<h2>X → Nitter Redirector</h2>
+
+<p>Koi bhi x.com / twitter.com link paste karo:</p>
+<input id="url" placeholder="https://x.com/david" autofocus>
+<button id="go">Open on Nitter</button>
+
+<h3>Bookmarklet</h3>
+<p>Is button ko bookmarks bar me drag karo. X ke kisi page par click karoge to wahi page random Nitter par khulega:</p>
+<a class="bm" id="bm">X → Nitter</a>
+
+<script>
+const INSTANCES = [
+  'https://nitter.catsarch.com',
+  'https://nitter.tiekoetter.com',
+  'https://shitter.thepixora.com',
+  'https://nitter.jaydenha.uk',
+  'https://songlark.jaydenha.uk'
+];
+
+function convert(input) {
+  let s = input.trim();
+  if (!s) return null;
+  if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
+  let u;
+  try { u = new URL(s); } catch { return null; }
+  const host = u.hostname.replace(/^www\./, '');
+  if (host !== 'x.com' && host !== 'twitter.com') return null;
+  const base = INSTANCES[Math.floor(Math.random() * INSTANCES.length)];
+  return base + u.pathname + u.search + u.hash;
+}
+
+function go(value) {
+  const t = convert(value);
+  if (t) location.replace(t);
+  else alert('Valid x.com ya twitter.com link daalo.');
+}
+
+document.getElementById('go').onclick = () => go(document.getElementById('url').value);
+document.getElementById('url').addEventListener('keydown', e => { if (e.key === 'Enter') go(e.target.value); });
+
+// ?url=https://x.com/david support
+const q = new URLSearchParams(location.search).get('url');
+if (q) go(q);
+
+// Bookmarklet
+const bm = "javascript:(function(){var I=" + JSON.stringify(INSTANCES) +
+  ";var h=location.hostname.replace(/^www\\./,'');if(h!=='x.com'&&h!=='twitter.com'){alert('Ye X page nahi hai');return}" +
+  "location.href=I[Math.floor(Math.random()*I.length)]+location.pathname+location.search+location.hash})();";
+document.getElementById('bm').href = bm;
+</script>
+</body>
+</html>
